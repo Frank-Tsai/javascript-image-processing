@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Spatial Transform</title>
+    <script src="point.js"></script>
+    <script>
+        function write_point(img,x,y,value){
+            img.data[y*img.width*4+x*4]=value[0];
+            img.data[y*img.width*4+x*4+1]=value[1];
+            img.data[y*img.width*4+x*4+2]=value[2];
+            img.data[y*img.width*4+x*4+3]=value[3];
+        }
+        function read_point(img,x,y){
+            if(x>=img.width||x<0||y>=img.height||y<0){
+                return [0,0,0,255];
+            }
+            return [
+                img.data[y*img.width*4+x*4],
+                img.data[y*img.width*4+x*4+1],
+                img.data[y*img.width*4+x*4+2],
+                img.data[y*img.width*4+x*4+3]
+            ];
+        }
+        window.addEventListener("load",function(){
+            var mycanvas=document.getElementById("mycanvas");
+            var a=document.getElementById("a");
+            mycanvas.width=a.width;
+            mycanvas.height=a.height;
+            var ctx=mycanvas.getContext("2d");
+            ctx.drawImage(a,0,0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+            var angle=0;
+            var scalex=2,scaley=2;
+            var trans_x=0,trans_y=0;
+            var shear_direct=1,shear_dist=20;
+            var new_width=mycanvas.width*scalex,new_height=mycanvas.height*scaley;
+            var input=ctx.getImageData(0,0,mycanvas.width,mycanvas.height);
+            
+            var output=ctx.createImageData(new_width,new_height);
+            var output2=ctx.createImageData(new_width,new_height);
+            //var output3=ctx.createImageData(new_width,new_height);
+            
+            var center={"x":new_width/2,"y":new_height/2};
+            //console.log(center);
+            for(i=0;i<new_width;i++){
+                for(j=0;j<new_height;j++){
+                    var tmp=new point(i,j);
+                    tmp.rotate(angle,center).scale(scalex,scaley).translate(trans_x,trans_y).shearing(shear_direct,shear_dist,center);
+                    write_point(output,i,j,tmp.nearest(input));
+                    write_point(output2,i,j,tmp.bilinear(input));
+                    //write_point(output3,i,j,tmp.bicubi(input));
+                }
+            }
+            mycanvas.width=new_width*3;
+            mycanvas.height=new_height;
+            ctx.putImageData(output, 0, 0);
+            ctx.putImageData(output2, new_width, 0);
+            //ctx.putImageData(output3, 0, new_height*2);
+            
+            
+        });
+    </script>
+    <style>
+    img{
+        display:none;
+    }
+    </style>
+</head>
+<body>
+    <img src="png/b.png" alt="" id="a">
+    <canvas id="mycanvas"></canvas>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Spatial Transform</title>
+    <script src="point.js"></script>
+    <script>
+
+        window.addEventListener("load",function(){
+            var mycanvas=document.getElementById("mycanvas");
+            var a=document.getElementById("a");
+            mycanvas.width=a.width;
+            mycanvas.height=a.height;
+            var ctx=mycanvas.getContext("2d");
+            ctx.drawImage(a,0,0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+            var angle=30;
+            var scalex=2,scaley=2;
+            var trans_x=0,trans_y=0;
+            var shear_direct=1,shear_dist=0;
+            var new_width=mycanvas.width*scalex,new_height=mycanvas.height*scaley;
+            
+            var input=ctx.getImageData(0,0,mycanvas.width,mycanvas.height);
+            var output=ctx.createImageData(new_width,new_height);
+            var output2=ctx.createImageData(new_width,new_height);
+            var output3=ctx.createImageData(new_width,new_height);
+            
+            var center={"x":new_width/2,"y":new_height/2};
+            //console.log(center);
+            for(i=0;i<new_width;i++){
+                for(j=0;j<new_height;j++){
+                    var coor=[i,j];
+                    coor=rotate(coor[0],coor[1],angle,center);
+                    coor=scale(coor[0],coor[1],scalex,scaley);
+                    coor=translate(coor[0],coor[1],trans_x,trans_y);
+                    coor=shearing(coor[0],coor[1],shear_direct,shear_dist,center);
+                    write_point(output,i,j,nearest(coor[0],coor[1],input));
+                    write_point(output2,i,j,bilinear(coor[0],coor[1],input));
+                    write_point(output3,i,j,bicubic(coor[0],coor[1],input));
+                }
+            }
+            mycanvas.width=new_width*3;
+            mycanvas.height=new_height;
+            ctx.putImageData(output, 0, 0);
+            ctx.putImageData(output2, new_width, 0);
+            ctx.putImageData(output3, new_width*2, 0);
+            
+            
+        });
+    </script>
+    <style>
+    img{
+        display:none;
+    }
+    </style>
+</head>
+<body>
+    <img src="png/c.png" alt="" id="a">
+    <canvas id="mycanvas"></canvas>
+</body>
+</html>
